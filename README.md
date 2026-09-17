@@ -1,182 +1,61 @@
-# Aframax-Monthly
-Forecasting monthly values ​​of shipping companies.
+# Aframax Monthly Forecasting
 
----
+A Python research implementation for forecasting monthly shipping-related time series with Keras Bidirectional LSTM models.
 
-# 📈 Time‑Series Forecasting with Bidirectional LSTM  
-*A modular framework for predicting monthly values in shipping and logistics*
+The original project dataset is private and is not included. This repository contains the forecasting script and documentation.
 
-This repository contains a complete workflow for building **Bidirectional LSTM–based time‑series forecasting models**.  
-Although originally developed for predicting **monthly operational values of shipping companies**, the code is fully generalizable and can be applied to any univariate time‑series dataset.
+## Implementation
 
-> **Note:** The dataset used in development is private and therefore not included in this repository.  
-> You can replace it with your own CSV file following the structure described below.
+The current script:
 
----
+- Parses dates and prepares numeric target series.
+- Applies winsorisation and min-max scaling.
+- Creates a separate Bidirectional LSTM model with 50 units and a dense output for each configured target.
+- Uses mean-squared-error loss and the Adam optimiser.
+- Generates iterative predictions and retrains the model as the loop advances.
+- Exports the processed data and prediction records.
 
-## 🚀 Features
+The script currently uses a one-step input window and four target identifiers: `47179`, `11118`, `77781` and `37997`. These are project-specific settings rather than a general input contract.
 
-- **Full preprocessing pipeline**  
-  - Date parsing and indexing  
-  - Outlier handling via Winsorization  
-  - Min‑Max normalization  
-  - Zero‑value correction for numerical stability  
+## Repository contents
 
-- **Neural network architecture**  
-  - Bidirectional LSTM with a single-step forecasting setup  
-  - Customizable input window (`n_input`)  
-  - Sample‑by‑sample training option for incremental learning  
+| File | Purpose |
+| --- | --- |
+| `Aframax Monthly.py` | Data preparation, model training, iterative prediction and result export |
+| `README.md` | Project context, configuration and evaluation notes |
 
-- **Dynamic / online learning**  
-  - After each prediction, the new data point is appended to the training set  
-  - The model retrains itself continuously to adapt to new patterns  
+## Dependencies
 
-- **Feature selection (optional)**  
-  - K‑Best regression scoring for exploratory analysis  
+The imports and exports require Python packages including pandas, NumPy, SciPy, scikit-learn, Keras, a compatible backend such as TensorFlow, and openpyxl.
 
-- **Evaluation metrics**  
-  - Custom accuracy formula  
-  - Average accuracy per target  
-  - Confidence level based on threshold performance  
-
-- **Exportable results**  
-  - Predictions, actual values, and accuracy stored in a structured Excel file  
-
----
-
-## 📂 Project Structure
-
-```
-.
-├── README.md
-├── main.py                # Core forecasting script
-├── output.xlsx            # Generated predictions (created at runtime)
-└── normalized_data.xlsx   # Preprocessed dataset (created at runtime)
+```bash
+python -m pip install pandas numpy scipy scikit-learn tensorflow keras openpyxl
 ```
 
----
+Dependency versions are not pinned. Check Keras/TensorFlow compatibility and tensor shapes in your chosen environment before running a full experiment.
 
-## 📊 How the Model Works
+## Configure and run
 
-### 1. **Data Preparation**
-The script loads a CSV file where the first column represents dates and the remaining columns represent numeric time‑series features.  
-It performs:
+1. Provide a CSV dataset. The first column is parsed as dates in `YYYYMMDD` format; target columns must be numeric.
+2. Update `DATA_PATH` in the script.
+3. Update `targets`, the hard-coded training windows and `n_input` for your data. The current loop assumes sufficient history beyond row 362.
+4. Run the actual entry file:
 
-- Date conversion  
-- Index resetting  
-- Outlier trimming  
-- Normalization  
-- Zero‑value correction  
-
-This ensures the data is clean and stable for neural network training.
-
----
-
-### 2. **Model Architecture**
-Each target variable is modeled independently using:
-
-- A **Bidirectional LSTM** layer with 50 units  
-- A **Dense** output layer  
-- `mean_squared_error` loss  
-- `adam` optimizer  
-
-This architecture captures both forward and backward temporal dependencies.
-
----
-
-### 3. **Training Strategy**
-The model uses a **1‑step lag** (`n_input = 1`) to predict the next value.
-
-Training occurs in two phases:
-
-#### **Initial Training**
-A historical window is selected for each target, and the model is trained sample‑by‑sample.
-
-#### **Iterative Forecasting + Online Retraining**
-For each new time step:
-
-1. Predict the next value  
-2. Calculate accuracy  
-3. Append the new sample to the training set  
-4. Retrain the model on the expanded dataset  
-
-This creates an **adaptive forecasting system** that evolves with the data.
-
----
-
-### 4. **Evaluation**
-The script computes:
-
-- Accuracy for each prediction  
-- Average accuracy across all predictions  
-- A “confidence level” based on how many predictions exceed an accuracy threshold (default: 85%)  
-
-All results are exported to `output.xlsx`.
-
----
-
-## 📁 Input Data Format
-
-Your CSV file should follow this structure:
-
-| Date       | Feature1 | Feature2 | ... |
-|------------|----------|----------|-----|
-| 19910101   | 123      | 456      | ... |
-| 19910201   | 130      | 470      | ... |
-| ...        | ...      | ...      | ... |
-
-- The **first column must contain dates** in `YYYYMMDD` format.  
-- All other columns must be numeric.  
-- You may include as many features as you want; the script selects specific targets internally.
-
----
-
-## 🛠 Requirements
-
-Install dependencies using:
-
-```
-pip install pandas numpy keras scipy scikit-learn openpyxl
+```bash
+python "Aframax Monthly.py"
 ```
 
----
+The script writes `normalized_data.xlsx` and `output.xlsx` in the working directory. These are runtime outputs, not bundled benchmark results.
 
-## ▶️ Running the Script
+## Evaluation status
 
-Update the dataset path in the code:
+The published implementation is a research snapshot. It does not include a reproducible benchmark on the private dataset.
 
-```python
-data = pd.read_csv('path/to/your/data.csv')
-```
+- Winsorisation and scaling are currently calculated before the evaluation split. A defensible forecast experiment should fit these transformations on training data only.
+- The script's percentage "accuracy" is a custom formula. The field called "confidence" is the proportion of scores above a threshold, not a statistical confidence interval.
+- Standard forecast errors such as MAE/RMSE, a chronological validation protocol and a simple baseline are needed before making comparative performance claims.
+- Training input shapes and the indexing used during iterative retraining should be checked in a reproducible run.
 
-Then run:
+## Next development steps
 
-```
-python main.py
-```
-
-The script will generate:
-
-- `normalized_data.xlsx`  
-- `output.xlsx`  
-- Console logs with detailed accuracy information  
-
----
-
-## 🔒 About the Dataset
-
-The original dataset used to develop this project is **private** and cannot be shared.  
-However, the code is fully reusable with any time‑series dataset that follows the required structure.
-
----
-
-## 📌 Future Improvements
-
-- Multi‑step forecasting  
-- Hyperparameter tuning  
-- Support for multivariate LSTM inputs  
-- Visualization of predictions and error metrics  
-
----
-
-If you'd like, I can also help you generate a **LICENSE**, **contribution guidelines**, or a **clean folder structure** for publishing this on GitHub.
+Make data paths, target columns and training windows configurable; pin the environment; add training-only preprocessing, standard forecast metrics and baseline comparisons; then evaluate longer input windows and multi-step forecasts.
